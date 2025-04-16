@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       .replace(const LoginScreenRoute())
                       .onError((error, stackTrace) {
                     Utils().toastMessage(error.toString());
+                    return null;
                   });
                 });
               },
