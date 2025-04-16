@@ -1,5 +1,6 @@
 import 'package:chat_app/features/auth_screen/presentation/login_screen/login_screen.dart';
 import 'package:chat_app/l10n/l10n.dart';
+import 'package:chat_app/router/app_router.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatelessWidget {
@@ -7,7 +8,9 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final appRouter = AppRouter(); // Instantiate here
+
+    return MaterialApp.router(
       theme: ThemeData(
         appBarTheme: AppBarTheme(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -16,7 +19,7 @@ class App extends StatelessWidget {
       ),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const LoginScreen(),
+      routerConfig: appRouter.config(), // Use instance here
     );
   }
 }
