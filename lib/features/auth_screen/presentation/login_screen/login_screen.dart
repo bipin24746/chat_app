@@ -15,8 +15,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
-
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -28,11 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
             email: emailController.text.toString(),
             password: passwordController.text.toString())
         .then((value) {
-          Utils().toastMessage(value.user!.email.toString());
-          AutoRouter.of(context).replace(HomeScreenRoute());
-    })
-        .onError((error, stackTrace) {
-          debugPrint(error.toString());
+      Utils().toastMessage(value.user!.email.toString());
+      AutoRouter.of(context).replace(const HomeScreenRoute());
+    }).onError((error, stackTrace) {
+      debugPrint(error.toString());
       Utils().toastMessage(error.toString());
     });
   }
@@ -123,6 +120,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Login With Phone',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                TextButton(
+                    onPressed: () {
+                      AutoRouter.of(context).replace(
+                        const LoginWithPhoneNumberRoute(),
+                      );
+                    },
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold),
+                    ),),
               ],
             ),
           ],
