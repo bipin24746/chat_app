@@ -89,7 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  @override
+
   @override
   Widget build(BuildContext context) {
     final chatId = getChatId(currentUserId, widget.receiverId);
