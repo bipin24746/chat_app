@@ -2,8 +2,8 @@ import 'package:auto_route/annotations.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:chat_app/router/app_router.gr.dart';
 import 'package:chat_app/utils/utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 @RoutePage()
@@ -15,26 +15,51 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formkey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
-  final controllerFirstName = TextEditingController();
-  final controllerLastName = TextEditingController();
-  final controllerNumber = TextEditingController();
-  final controllerEmail = TextEditingController();
-  final controllerPassword = TextEditingController();
-  final controllerConfirmPassword = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
-    controllerFirstName.dispose();
-    controllerLastName.dispose();
-    controllerEmail.dispose();
-    controllerNumber.dispose();
-    controllerPassword.dispose();
-    controllerConfirmPassword.dispose();
+  }
+
+  Future<void> _registerUser() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      final uid = userCredential.user!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'first_name': _firstNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'uid': uid,
+        'created_at': Timestamp.now(),
+      });
+
+      Utils().toastMessage("User Registered Successfully!");
+      AutoRouter.of(context).replace(const LoginScreenRoute());
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        Utils().toastMessage('This email is already registered');
+      } else {
+        Utils().toastMessage(e.message ?? 'Registration failed');
+      }
+    } catch (e) {
+      Utils().toastMessage('An error occurred: $e');
+    }
   }
 
   @override
@@ -56,131 +81,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Create an Account',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
-              ),
-              const SizedBox(
-                height: 5,
-              ),
-              TextFormField(
-                controller: controllerFirstName,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  hintText: 'Enter First Name',
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const Text(
+                  'Create an Account',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
                 ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                controller: controllerLastName,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _firstNameController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    hintText: 'Enter First Name',
                   ),
-                  hintText: 'Enter Last Name',
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter your name' : null,
                 ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                controller: controllerNumber,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    hintText: 'Enter Email',
                   ),
-                  hintText: 'Mobile Number',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter an email';
+                    }
+                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                    if (!emailRegex.hasMatch(value)) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                controller: controllerEmail,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 15),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    hintText: 'Enter Password',
                   ),
-                  hintText: 'Enter Email',
+                  validator: (value) {
+                    if (value == null || value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                controller: controllerPassword,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                   ),
-                  hintText: 'Enter Password',
-                ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                controller: controllerConfirmPassword,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
+                  onPressed: _registerUser,
+                  child: const Text(
+                    'Sign Up',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                  hintText: 'Confirm Password',
                 ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                onPressed: () {
-                  _auth
-                      .createUserWithEmailAndPassword(
-                          email: controllerEmail.text.toString(),
-                          password: controllerPassword.text.toString())
-                      .then((value) {})
-                      .onError((error, stackTrace) {
-                    Utils().toastMessage('This email is already registered');
-                  });
-                },
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(
-                height: 5,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Already Have an Account?',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      AutoRouter.of(context).replace(const LoginScreenRoute());
-                    },
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.black,
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Already Have an Account?',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        AutoRouter.of(context).replace(const LoginScreenRoute());
+                      },
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

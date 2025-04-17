@@ -3,6 +3,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:chat_app/features/home_screen/home_screen.dart';
 import 'package:chat_app/router/app_router.gr.dart';
 import 'package:chat_app/utils/utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -20,19 +21,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final _auth = FirebaseAuth.instance;
 
-  void login() {
-    _auth
-        .signInWithEmailAndPassword(
-            email: emailController.text.toString(),
-            password: passwordController.text.toString())
-        .then((value) {
-      Utils().toastMessage(value.user!.email.toString());
-      AutoRouter.of(context).replace(const HomeScreenRoute());
-    }).onError((error, stackTrace) {
-      debugPrint(error.toString());
-      Utils().toastMessage(error.toString());
-    });
+  void login() async {
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      final uid = userCredential.user!.uid;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+
+        Utils().toastMessage("Welcome ${userData['first_name']}!");
+        // AutoRouter.of(context).replace(const HomeScreenRoute());
+        AutoRouter.of(context).replace(const SelectUserScreenRoute());
+      } else {
+        Utils().toastMessage("No user data found in Firestore!");
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      Utils().toastMessage("Login failed: ${e.toString()}");
+    }
   }
+
 
   @override
   void dispose() {

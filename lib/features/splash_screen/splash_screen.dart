@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = auth.currentUser;
     if (user != null) {
       Timer(const Duration(seconds: 1), () {
-        AutoRouter.of(context).replace(const HomeScreenRoute());
+        AutoRouter.of(context).replace(const SelectUserScreenRoute());
       });
     } else {
       Timer(const Duration(seconds: 1), () {

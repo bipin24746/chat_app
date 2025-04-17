@@ -37,7 +37,7 @@ class _LoginWithPhoneNumberState extends State<LoginWithPhoneNumber> {
 
     // Placeholder for logic
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sending OTP to +977 $phone')),
+      SnackBar(content: Text('Sending OTP to +977$phone')),
     );
   }
 
@@ -70,7 +70,7 @@ class _LoginWithPhoneNumberState extends State<LoginWithPhoneNumber> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                prefixText: '+977 ',
+                prefixText: '+977',
               ),
             ),
             const SizedBox(height: 20),
@@ -83,7 +83,7 @@ class _LoginWithPhoneNumberState extends State<LoginWithPhoneNumber> {
               onPressed: () {
                 _onSendOtpPressed();
                 auth.verifyPhoneNumber(
-                    phoneNumber: phoneController.text,
+                    phoneNumber: '+977${phoneController.text.trim()}',
                     verificationCompleted: (_) {},
                     verificationFailed: (e) {
                       Utils().toastMessage(e.toString());
