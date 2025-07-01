@@ -16,7 +16,7 @@ dependencies:
   intl:
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.2
-  firebase_messaging: ^15.2.5
+  firebase_messaging: ^15.2.8
   cloud_firestore: ^5.6.6
   auto_route: ^10.0.1
   auto_route_generator: ^10.0.1
